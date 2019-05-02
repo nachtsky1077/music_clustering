@@ -62,15 +62,16 @@ class MusicLoader(object):
                 self.print(3, 'file full path:{}'.format(file_full_path))
                 au_loader = AuLoader(file_full_path)
                 data = au_loader.load(n_frames)
+                data = data.reshape(1, data.shape[0])
                 self.print(3, 'data shape:{}'.format(data.shape))
+                self.print(3, 'data:{}'.format(data))
                 if ts_data is None:
                     ts_data = np.array(data)
                 else:
-                    ts_data = np.concatenate(ts_data, data, axis=0)
+                    ts_data = np.concatenate([ts_data, data], axis=0)
         self.print(2, 'ts data matrix:{}'.format(ts_data))
         return ts_data
-            
-            
+        
             
 
 

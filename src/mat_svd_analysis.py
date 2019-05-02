@@ -6,32 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from spectral_density import *
 from seaborn import heatmap
-
-class MatLoader():
-
-    def __init__(self, base_path):
-        self.base_path = base_path
-        self.mat = None
-
-    def base_path_is(self, base_path):
-        if base_path != self.base_path:
-            self.base_path = base_path
-
-    def load_mat_data(self, filename):
-        try:
-            mat = scipy.io.loadmat(self.base_path + filename)
-        except:
-            print('[ERR]: error loading mat file.')
-            print(traceback.format_exception())
-            mat = None
-        self.mat = mat
-
-    def get_mat_data(self, field_name):
-        if self.mat is None:
-            print('[ERR]: no valid mat loaded.')
-            return None
-        else:
-            return self.mat.get(field_name, None)
+from src.neural_dataloader import *
+from src.au_dataloader import *
 
 class SVDAnalyzer():
 
@@ -81,13 +57,10 @@ def plot_singular_values(sigma, filenames):
     ax.legend()
     return fig
 
-
-
-mat_base_path = './dataset_mental/FuncTimeSeries 1/FuncTimeSeries/'
 #############################################################################################
-# main api
+# svd api
 #############################################################################################
-def svd_estimation_main(mat_base_path, filename, rank=20, plot_sigma_decay=False):
+def svd_estimation_neural(mat_base_path, filename, rank=20, plot_sigma_decay=False):
     '''
     :mat_base_path: the base path for the .mat files
     :size: number of random .mat files selected to analyze
@@ -108,7 +81,17 @@ def svd_estimation_main(mat_base_path, filename, rank=20, plot_sigma_decay=False
     fig = plot_singular_values(sigma, [filename]) if plot_sigma_decay else None
 
     return vol, est_vol, fig
-    
+
+def svd_estimation_music(base_path, genres, n_files, rank, plot_sigma_decay=False):
+    '''
+    :base_path: music data base path
+    :genres: a list contains the genres(folder) to load data from
+    :n_files: specifies the number of audio files to load for each genre
+    :rank:
+    :plot_sigma_decay:
+    '''
+    # TODO
+    pass
 
 #############################################################################################
 # spectral analysis
@@ -136,6 +119,10 @@ def spectral_analysis(ts, **kwargs):
     return spec_est_one_freq
 
 def fnorm(mat, fft):
+    '''
+    :mat: the matrix
+    :fft: a flag indicating whether the matrix is in frequency domain or time domain
+    '''
     if fft:
         mat_conj = np.conj(mat)
         fnorm = np.trace(np.matmul(mat, mat_conj.T))
@@ -154,27 +141,28 @@ def estimation_relative_error(original_vol, estimated_vol, fft):
     norm_ori = fnorm(original_vol, fft)
     return norm_diff, norm_diff / norm_ori
 
-mat_base_path = './dataset_mental/FuncTimeSeries 1/FuncTimeSeries/'
-ori_vol, est_vol, fig = svd_estimation_main(mat_base_path, 'NIH-101_20100329_ts.mat', rank=40)
-kwargs = {'selected_freq_index': [0, 50]}
+if __name__ == '__main__':
+    mat_base_path = './dataset_mental/FuncTimeSeries 1/FuncTimeSeries/'
+    ori_vol, est_vol, fig = svd_estimation_neural(mat_base_path, 'NIH-101_20100329_ts.mat', rank=40)
+    kwargs = {'selected_freq_index': [0, 50]}
 
-# original ts spectral analysis
-spec_ori = spectral_analysis(ori_vol.T, **kwargs)
-fig_freq_zero_ori = plot_heatmap(abs(spec_ori[0]))
-fig_freq_half_ori = plot_heatmap(abs(spec_ori[50]))
-spec_ori_vals = spec_ori.values()
-fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_ori_vals]) / len(spec_ori))
-# estimated ts spectral analysis
-spec_est = spectral_analysis(est_vol.T, **kwargs)
-fig_freq_zero_est = plot_heatmap(abs(spec_est[0]))
-fig_freq_half_est = plot_heatmap(abs(spec_est[50]))
-spec_est_vals = spec_est.values()
-fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_est_vals]) / len(spec_est))
+    # original ts spectral analysis
+    spec_ori = spectral_analysis(ori_vol.T, **kwargs)
+    fig_freq_zero_ori = plot_heatmap(abs(spec_ori[0]))
+    fig_freq_half_ori = plot_heatmap(abs(spec_ori[50]))
+    spec_ori_vals = spec_ori.values()
+    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_ori_vals]) / len(spec_ori))
+    # estimated ts spectral analysis
+    spec_est = spectral_analysis(est_vol.T, **kwargs)
+    fig_freq_zero_est = plot_heatmap(abs(spec_est[0]))
+    fig_freq_half_est = plot_heatmap(abs(spec_est[50]))
+    spec_est_vals = spec_est.values()
+    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_est_vals]) / len(spec_est))
 
-# check relative error
-absolute_err_time_domain, relative_err_time_domain = estimation_relative_error(ori_vol, est_vol, False)
-absolute_err_freq_domain0, relative_err_freq_domain0 = estimation_relative_error(spec_ori[0], spec_est[0], False)
-absolute_err_freq_domain1, relative_err_freq_domain1 = estimation_relative_error(spec_ori[50], spec_est[50], False)
+    # check relative error
+    absolute_err_time_domain, relative_err_time_domain = estimation_relative_error(ori_vol, est_vol, False)
+    absolute_err_freq_domain0, relative_err_freq_domain0 = estimation_relative_error(spec_ori[0], spec_est[0], False)
+    absolute_err_freq_domain1, relative_err_freq_domain1 = estimation_relative_error(spec_ori[50], spec_est[50], False)
 
 
 
