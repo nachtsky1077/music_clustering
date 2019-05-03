@@ -2,6 +2,7 @@ import os
 import numpy as np
 import sunau
 import matplotlib.pyplot as plt
+from scipy.signal import decimate
 
 class AuLoader(object):
 
@@ -12,9 +13,13 @@ class AuLoader(object):
         # get file parameters
         self.params = self.au_read.getparams()
         
-    def load(self, nframes = None):
+    def load(self, nframes=None, downsample_ratio=None):
         '''
+        Most of the au files we downloaded in the dataset are 44.1kHz(SR), which means it will have 44.1k samples per
+        second, we have to downsample the audio stream to reduce the observation size. For example, the downsample the 
+        pcm file to 8000Hz will have 8000 * 5 = 40000 samples for the first 5 seconds of the audio file.
         :nframes: the number of frames to be loaded from the audio file
+        :downsample_ratio: downsample factor
         '''
         nframes = min(nframes, self.params.nframes) if nframes is not None else self.params.nframes
         
@@ -25,8 +30,12 @@ class AuLoader(object):
         # notes: the byte stream is in big endian so we use '>h'
         self.data = np.fromstring(bytes_stream, dtype = '>h')
 
-        return self.data
-    
+        if not downsample_ratio is None:
+            self.data_downsampled = decimate(self.data, q=downsample_ratio)
+            return self.data_downsampled
+        else:
+            return self.data
+
     def audio_params(self):
         return self.params
 
@@ -45,7 +54,7 @@ class MusicLoader(object):
         if level <= self.verbose:
             print(message)
 
-    def fetch_data(self, genres, n_examples=20, n_frames=100):
+    def fetch_data(self, genres, n_examples=20, n_frames=100, downsample_ratio=None):
         '''
         :genres: a list of genres to fetch data from, genre should match a folder name
         :n_observation: the number observations to extract from the music time series
@@ -61,7 +70,7 @@ class MusicLoader(object):
                 file_full_path = os.path.join(base_path, filename)
                 self.print(3, 'file full path:{}'.format(file_full_path))
                 au_loader = AuLoader(file_full_path)
-                data = au_loader.load(n_frames)
+                data = au_loader.load(n_frames, downsample_ratio=downsample_ratio)
                 data = data.reshape(1, data.shape[0])
                 self.print(3, 'data shape:{}'.format(data.shape))
                 self.print(3, 'data:{}'.format(data))
