@@ -60,8 +60,8 @@ def music_spectral_analysis(music_ts, freq_idx_list, k, **kwargs):
         for freq_idx in freq_idx_list:
             au_spec_modulus[freq_idx] = abs(coherence(au_spec[freq_idx]))
             fnorms.append((freq_idx, fnorm(au_spec_modulus[freq_idx], fft=False)))
-        fnorms.sort(key=lambda item: item[1])
-        
+        fnorms.sort(key=lambda item: item[1], reverse=True)
+        print(fnorms)
         # averaging top k frequencies
         ave = np.zeros(au_spec[0].shape)
         for i in range(k):
@@ -90,11 +90,11 @@ if __name__ == '__main__':
     ml = MusicLoader(data_base_path=data_base_path, verbose=0)
     music_ts = ml.fetch_data(genres=['classical', 'pop'],
                              n_examples=20,
-                             n_frames=50000,
+                             n_frames=1000,
                              downsample_ratio=10)
-    spec_density = music_spectral_analysis(music_ts, range(1000), 10)
+    spec_density = music_spectral_analysis(music_ts, range(50), 10)
     fig = plot_heatmap(spec_density)
-    fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(10), dpi=280)
+    #fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(10), dpi=280)
     # get correlation, check whether there's 'block' phenomenon
     #corr = np.corrcoef(music_ts)
     #corr_fig = plot_heatmap(corr)
