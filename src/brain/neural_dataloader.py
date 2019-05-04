@@ -1,6 +1,7 @@
 import scipy.io
 import traceback
 import numpy as np
+import os
 
 class MatLoader():
 
@@ -14,7 +15,7 @@ class MatLoader():
 
     def load_mat_data(self, filename):
         try:
-            mat = scipy.io.loadmat(self.base_path + filename)
+            mat = scipy.io.loadmat(os.path.join(self.base_path,filename))
         except:
             print('[ERR]: error loading mat file.')
             print(traceback.format_exception())

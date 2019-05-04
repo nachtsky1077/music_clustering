@@ -1,13 +1,10 @@
-import os
-import scipy.io
-import traceback
 from scipy.linalg import svd
-import matplotlib.pyplot as plt
-import numpy as np
-from spectral_density import *
 from seaborn import heatmap
-from src.neural_dataloader import *
+from spectral_density import *
+
 from src.au_dataloader import *
+from src.brain.neural_dataloader import *
+
 
 class SVDAnalyzer():
 
