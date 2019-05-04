@@ -2,8 +2,8 @@ from scipy.linalg import svd
 from seaborn import heatmap
 from spectral_density import *
 
-from src.au_dataloader import *
-from src.brain.neural_dataloader import *
+from au_dataloader import *
+from brain.neural_dataloader import *
 
 
 class SVDAnalyzer():
