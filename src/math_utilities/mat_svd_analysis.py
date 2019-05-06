@@ -81,7 +81,7 @@ def spectral_analysis(ts, **kwargs):
     model_info['stdev'] = kwargs.get('stdev', 1)
     selected_freq_idx = kwargs.get('selected_freq_index', None)
 
-    spec_est = SpecEst(ts, model_info, selected_freq_index=None, individual_level=True, simu=False)
+    spec_est = SpecEst(ts, model_info,  individual_level=True, simu=False)
 
     spec_est_one_freq = {}
     for freq_idx in selected_freq_idx:

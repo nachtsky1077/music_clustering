@@ -1,3 +1,4 @@
+#!/home/yg93/anaconda3/bin/python
 from au_dataloader import MusicLoader
 from mat_svd_analysis import SVDAnalyzer, plot_singular_values, plot_heatmap, spectral_analysis, fnorm
 from spectral_density import *
@@ -53,14 +54,15 @@ def music_spectral_analysis(music_ts, freq_idx_list, k, **kwargs):
 
     if k is None:
         #TODO
-        return au_spec
+        return au_spec, None
     else:
         fnorms = []
         au_spec_modulus = {}
         # calculate fnorm of the spectral density estimation
         for freq_idx in freq_idx_list:
             au_spec_modulus[freq_idx] = abs(coherence(au_spec[freq_idx]))
-            fnorms.append((freq_idx, fnorm(au_spec_modulus[freq_idx], fft=False)))
+            #fnorms.append((freq_idx, fnorm(au_spec_modulus[freq_idx], fft=False)))
+            fnorms.append((freq_idx, au_spec_modulus[freq_idx].flatten().std()))
         fnorms.sort(key=lambda item: item[1], reverse=True)
         #print(fnorms)
         # averaging top k frequencies
@@ -68,7 +70,7 @@ def music_spectral_analysis(music_ts, freq_idx_list, k, **kwargs):
         for i in range(k):
             ave += au_spec_modulus[fnorms[i][0]]
         ave /= k
-        return ave
+        return au_spec_modulus, ave
 
 '''
 for freq_idx in range(0, 500, 5):
@@ -86,14 +88,19 @@ fig.show()
 '''
 
 if __name__ == '__main__':
-    data_base_path = 'dataset_music/music_genres_dataset_tiny'
+    data_base_path = '../dataset_music/music_genres_dataset_tiny'
 
     ml = MusicLoader(data_base_path=data_base_path, verbose=0)
     music_ts = ml.fetch_data(genres=['classical', 'pop'],
                              n_examples=20,
-                             n_frames=1000,
+                             n_frames=20000,
                              downsample_ratio=10)
-    spec_density = music_spectral_analysis(music_ts, range(50), 10)
+    spec_density_all, spec_density = music_spectral_analysis(music_ts, range(501), 50)
+    
+    for freq_idx in range(0, 501, 10):
+        fig = plot_heatmap(spec_density_all[freq_idx])
+        fig.savefig('../results/heatmaps/spectral_density_freq_idx_{}.png'.format(freq_idx), dpi=150)
+        plt.close()
     fig = plot_heatmap(spec_density)
     fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(10), dpi=280)
     # get correlation, check whether there's 'block' phenomenon
