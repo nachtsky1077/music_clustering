@@ -2,10 +2,6 @@ from scipy.linalg import svd
 from seaborn import heatmap
 from spectral_density import *
 
-from au_dataloader import *
-from brain.neural_dataloader import *
-
-
 class SVDAnalyzer():
 
     def __init__(self, mat=None):
@@ -57,28 +53,6 @@ def plot_singular_values(sigma, filenames):
 #############################################################################################
 # svd api
 #############################################################################################
-def svd_estimation_neural(mat_base_path, filename, rank=20, plot_sigma_decay=False):
-    '''
-    :mat_base_path: the base path for the .mat files
-    :size: number of random .mat files selected to analyze
-    :rank: the rank used to do svd estimation \hat{X} = svd_estimation(X, rank)
-    :plot_sigma_decay: plot the singular values for each .mat matrix
-    '''
-    matloader = MatLoader(mat_base_path)
-    sa = SVDAnalyzer()
-    sigma = []
-    matloader.load_mat_data(filename)
-    vol = matloader.get_mat_data('vol')
-    sa.mat_is(vol)
-    sa.analyze()
-    sigma.append(sa.singular_values())
-    est_vol = sa.svd_estimation(rank=rank)
-
-    # plot singular values decay scatter
-    fig = plot_singular_values(sigma, [filename]) if plot_sigma_decay else None
-
-    return vol, est_vol, fig
-
 def svd_estimation_music(base_path, genres, n_files, rank, plot_sigma_decay=False):
     '''
     :base_path: music data base path
@@ -115,51 +89,30 @@ def spectral_analysis(ts, **kwargs):
     
     return spec_est_one_freq
 
-def fnorm(mat, fft):
-    '''
-    :mat: the matrix
-    :fft: a flag indicating whether the matrix is in frequency domain or time domain
-    '''
-    if fft:
-        mat_conj = np.conj(mat)
-        fnorm = np.trace(np.matmul(mat, mat_conj.T))
-    else:
-        fnorm = np.linalg.norm(mat)
-    return fnorm
-
 def plot_heatmap(mat):
     fig, ax = plt.subplots()
     heatmap(mat, ax=ax)
     return fig
 
-def estimation_relative_error(original_vol, estimated_vol, fft):
-    diff = original_vol - estimated_vol
-    norm_diff = fnorm(diff, fft)
-    norm_ori = fnorm(original_vol, fft)
-    return norm_diff, norm_diff / norm_ori
-
-if __name__ == '__main__':
-    mat_base_path = './dataset_mental/FuncTimeSeries 1/FuncTimeSeries/'
-    ori_vol, est_vol, fig = svd_estimation_neural(mat_base_path, 'NIH-101_20100329_ts.mat', rank=40)
-    kwargs = {'selected_freq_index': [0, 50]}
-
-    # original ts spectral analysis
-    spec_ori = spectral_analysis(ori_vol.T, **kwargs)
-    fig_freq_zero_ori = plot_heatmap(abs(spec_ori[0]))
-    fig_freq_half_ori = plot_heatmap(abs(spec_ori[50]))
-    spec_ori_vals = spec_ori.values()
-    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_ori_vals]) / len(spec_ori))
-    # estimated ts spectral analysis
-    spec_est = spectral_analysis(est_vol.T, **kwargs)
-    fig_freq_zero_est = plot_heatmap(abs(spec_est[0]))
-    fig_freq_half_est = plot_heatmap(abs(spec_est[50]))
-    spec_est_vals = spec_est.values()
-    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_est_vals]) / len(spec_est))
-
-    # check relative error
-    absolute_err_time_domain, relative_err_time_domain = estimation_relative_error(ori_vol, est_vol, False)
-    absolute_err_freq_domain0, relative_err_freq_domain0 = estimation_relative_error(spec_ori[0], spec_est[0], False)
-    absolute_err_freq_domain1, relative_err_freq_domain1 = estimation_relative_error(spec_ori[50], spec_est[50], False)
+#if __name__ == '__main__':
+#
+#    kwargs = {'selected_freq_index': [0, 50]}#
+#    # original ts spectral analysis
+#    spec_ori = spectral_analysis(ori_vol.T, **kwargs)
+#    fig_freq_zero_ori = plot_heatmap(abs(spec_ori[0]))
+#    fig_freq_half_ori = plot_heatmap(abs(spec_ori[50]))
+#    spec_ori_vals = spec_ori.values()
+#    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_ori_vals]) / len(spec_ori))
+#    # estimated ts spectral analysis
+#    spec_est = spectral_analysis(est_vol.T, **kwargs)
+#    fig_freq_zero_est = plot_heatmap(abs(spec_est[0]))
+#    fig_freq_half_est = plot_heatmap(abs(spec_est[50]))
+#    spec_est_vals = spec_est.values()
+#    fig_freq_ave_ori = plot_heatmap(sum([abs(mat) for mat in spec_est_vals]) / len(spec_est))#
+#    # check relative error
+#    absolute_err_time_domain, relative_err_time_domain = estimation_relative_error(ori_vol, est_vol, False)
+#    absolute_err_freq_domain0, relative_err_freq_domain0 = estimation_relative_error(spec_ori[0], spec_est[0], False)
+#    absolute_err_freq_domain1, relative_err_freq_domain1 = estimation_relative_error(spec_ori[50], spec_est[50], False)
 
 
 
