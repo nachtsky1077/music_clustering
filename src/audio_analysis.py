@@ -53,15 +53,15 @@ def music_spectral_analysis(music_ts, freq_idx_list, k, **kwargs):
     kwargs['selected_freq_index'] = freq_idx_list
     au_spec = spectral_analysis(music_ts.T, **kwargs)
 
+    au_spec_modulus = {}
+    # calculate fnorm of the spectral density estimation
+    for freq_idx in freq_idx_list:
+        au_spec_modulus[freq_idx] = abs(au_spec[freq_idx])
     if k is None:
-        #TODO
-        return au_spec, None
+        return au_spec_modulus, None
     else:
         fnorms = []
-        au_spec_modulus = {}
-        # calculate fnorm of the spectral density estimation
         for freq_idx in freq_idx_list:
-            au_spec_modulus[freq_idx] = abs(coherence(au_spec[freq_idx]))
             fnorms.append((freq_idx, fnorm(au_spec_modulus[freq_idx], fft=False)))
             #fnorms.append((freq_idx, au_spec_modulus[freq_idx].ravel().std()))
         fnorms.sort(key=lambda item: item[1], reverse=True)
@@ -107,28 +107,35 @@ def reorder_spec_density(spec_matrix, labels):
 
 
 if __name__ == '__main__':
-    data_base_path = 'dataset_music/music_genres_dataset_tiny'
-    top_k = 20
+    data_base_path = 'dataset_music/music_genres_dataset'
+    top_k = 50
     ml = MusicLoader(data_base_path=data_base_path, verbose=0)
-    music_ts = ml.fetch_data(genres=['classical', 'pop'],
-                             n_examples=10,
-                             n_frames=20000,
-                             downsample_ratio=10)
-    spec_density_all, spec_density = music_spectral_analysis(music_ts, range(100), top_k)
+    #music_ts = ml.fetch_data(genres=['pop', 'rock'],
+    #                         n_examples=10,
+    #                         n_frames=20000,
+    #                         downsample_ratio=10)
+
+    num_frames = 20
+    frame_size = 1024 * 8
+    hop_size = 64 * 4
+    music_ts_dict = ml.librosa_fetch(genres=['pop', 'rock'], sr=22050, n_examples=5, frame_size=frame_size, hop_size=hop_size, num_frames=num_frames)
+    for frame_num in range(num_frames):
+        music_ts = music_ts_dict[frame_num]
+        spec_density_all, spec_density = music_spectral_analysis(music_ts, range(frame_size / 4), None)
     
-    #for freq_idx in range(0, 501, 10):
-    #    fig = plot_heatmap(spec_density_all[freq_idx])
-    #    fig.savefig('../results/heatmaps/spectral_density_freq_idx_{}.png'.format(freq_idx), dpi=150)
-    #    plt.close()
-    fig = plot_heatmap(spec_density)
-    fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(top_k), dpi=280)
+        for freq_idx in range(0, frame_size / 4 / 2, 30):
+            fig = plot_heatmap(spec_density_all[freq_idx])
+            fig.savefig('results/heatmaps/spectral_density_frame_{}_freq_idx_{}.png'.format(frame_num, freq_idx), dpi=150)
+            plt.close()
+        #fig = plot_heatmap(spec_density)
+        #fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(top_k), dpi=280)
 
     # spectral clustering
-    labels = spectral_clustering(spec_density, 2)
-    print(labels)
-    reordered_spec = reorder_spec_density(spec_density, labels)
-    reordered_fig = plot_heatmap(reordered_spec)
-    reordered_fig.savefig('results/heatmaps/spectral_density_average_top_{}_reordered.png'.format(top_k), dpi=280)
+    #labels = spectral_clustering(spec_density, 2)
+    #print(labels)
+    #reordered_spec = reorder_spec_density(spec_density, labels)
+    #reordered_fig = plot_heatmap(reordered_spec)
+    #reordered_fig.savefig('results/heatmaps/spectral_density_average_top_{}_reordered.png'.format(top_k), dpi=280)
     # get correlation, check whether there's 'block' phenomenon
     #corr = np.corrcoef(music_ts)
     #corr_fig = plot_heatmap(corr)

@@ -3,6 +3,8 @@ import numpy as np
 import sunau
 import matplotlib.pyplot as plt
 from scipy.signal import decimate
+import librosa.util
+import librosa.core
 
 class AuLoader(object):
 
@@ -53,6 +55,28 @@ class MusicLoader(object):
     def print(self, level, message):
         if level <= self.verbose:
             print(message)
+
+    def librosa_fetch(self, genres, sr=22050, n_examples=10, frame_size=10240, hop_size=2560, num_frames=20):
+        if type(genres) != type([]):
+            categories = [genres]
+        ts_data = dict()
+        for genre in genres:
+            base_path = os.path.join(self.base_path, genre)
+            self.print(3, 'base_path:{}'.format(base_path))
+            for i in range(n_examples):
+                filename = '{}.{}.au'.format(genre, str(i).zfill(5))
+                file_full_path = os.path.join(base_path, filename)
+                self.print(3, 'file full path:{}'.format(file_full_path))
+                data, sr = librosa.core.load(file_full_path, sr=sr)
+                data_frames = librosa.util.frame(data, frame_length=frame_size, hop_length=hop_size)
+                for frame_num in range(num_frames):
+                    curr_frame = data_frames[:, frame_num]
+                    curr_frame = curr_frame.reshape((1, curr_frame.size))
+                    if not frame_num in ts_data:
+                        ts_data[frame_num] = curr_frame
+                    else:
+                        ts_data[frame_num] = np.concatenate([ts_data[frame_num], curr_frame], axis=0)
+        return ts_data
 
     def fetch_data(self, genres, n_examples=20, n_frames=100, downsample_ratio=None):
         '''
