@@ -80,13 +80,16 @@ def spectral_analysis(ts, **kwargs):
     model_info['span'] = kwargs.get('span', 14)
     model_info['stdev'] = kwargs.get('stdev', 1)
     selected_freq_idx = kwargs.get('selected_freq_index', None)
+    mode = kwargs.get('mode', 'sm')
 
     spec_est = SpecEst(ts, model_info,  individual_level=True, simu=False)
 
     spec_est_one_freq = {}
     for freq_idx in selected_freq_idx:
-        spec_est_one_freq[freq_idx] = spec_est.query_smoothing_estimator(freq_idx)
-    
+        if mode == 'sm':
+            spec_est_one_freq[freq_idx] = spec_est.query_smoothing_estimator(freq_idx)
+        elif mode == 'al':
+            spec_est_one_freq[freq_idx] = spec_est.query_adaptive_lasso_estimator(freq_idx)
     return spec_est_one_freq
 
 def plot_heatmap(mat):

@@ -51,6 +51,7 @@ def music_spectral_analysis(music_ts, freq_idx_list, k, **kwargs):
     :kwargs: the arguments passed down to spectral analysis function
     '''
     kwargs['selected_freq_index'] = freq_idx_list
+    kwargs['mode'] = 'al'
     au_spec = spectral_analysis(music_ts.T, **kwargs)
 
     au_spec_modulus = {}
@@ -108,25 +109,32 @@ def reorder_spec_density(spec_matrix, labels):
 
 if __name__ == '__main__':
     data_base_path = 'dataset_music/music_genres_dataset'
-    top_k = 50
+    top_k = 20
     ml = MusicLoader(data_base_path=data_base_path, verbose=0)
-    #music_ts = ml.fetch_data(genres=['pop', 'rock'],
-    #                         n_examples=10,
-    #                         n_frames=20000,
-    #                         downsample_ratio=10)
+    music_ts = ml.fetch_data(genres=['jazz', 'rock'],
+                             n_examples=5,
+                             n_frames=20000,
+                             downsample_ratio=10)
 
-    num_frames = 20
-    frame_size = 1024 * 8
-    hop_size = 64 * 4
-    music_ts_dict = ml.librosa_fetch(genres=['pop', 'rock'], sr=22050, n_examples=5, frame_size=frame_size, hop_size=hop_size, num_frames=num_frames)
-    for frame_num in range(num_frames):
-        music_ts = music_ts_dict[frame_num]
-        spec_density_all, spec_density = music_spectral_analysis(music_ts, range(frame_size / 4), None)
-    
-        for freq_idx in range(0, frame_size / 4 / 2, 30):
-            fig = plot_heatmap(spec_density_all[freq_idx])
-            fig.savefig('results/heatmaps/spectral_density_frame_{}_freq_idx_{}.png'.format(frame_num, freq_idx), dpi=150)
-            plt.close()
+    spec_density_all, spec_density = music_spectral_analysis(music_ts, range(501), top_k)
+
+    for freq_idx in range(0, 501, 50):
+        fig = plot_heatmap(spec_density_all[freq_idx])
+        fig.savefig('results/heatmaps/adaptivelasso_spectral_density_freq_idx_{}.png'.format(freq_idx), dpi=150)
+        plt.close()
+
+#    num_frames = 20
+#    frame_size = 1024 * 8
+#    hop_size = 64 * 4
+#    music_ts_dict = ml.librosa_fetch(genres=['pop', 'rock'], sr=22050, n_examples=5, frame_size=frame_size, hop_size=hop_size, num_frames=num_frames)
+#    for frame_num in range(num_frames):
+#        music_ts = music_ts_dict[frame_num]
+#        spec_density_all, spec_density = music_spectral_analysis(music_ts, range(frame_size / 4), None)
+#    
+#        for freq_idx in range(0, frame_size / 4 / 2, 30):
+#            fig = plot_heatmap(spec_density_all[freq_idx])
+#            fig.savefig('results/heatmaps/spectral_density_frame_{}_freq_idx_{}.png'.format(frame_num, freq_idx), dpi=150)
+#            plt.close()
         #fig = plot_heatmap(spec_density)
         #fig.savefig('results/heatmaps/spectral_density_average_top_{}.png'.format(top_k), dpi=280)
 

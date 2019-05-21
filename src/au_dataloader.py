@@ -69,6 +69,7 @@ class MusicLoader(object):
                 self.print(3, 'file full path:{}'.format(file_full_path))
                 data, sr = librosa.core.load(file_full_path, sr=sr)
                 data_frames = librosa.util.frame(data, frame_length=frame_size, hop_length=hop_size)
+                #print(data_frames.shape)
                 for frame_num in range(num_frames):
                     curr_frame = data_frames[:, frame_num]
                     curr_frame = curr_frame.reshape((1, curr_frame.size))
