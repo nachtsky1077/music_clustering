@@ -3,16 +3,16 @@ import sys
 import librosa.core
 import numpy as np
 sys.path.append(os.getcwd())
+from sklearn.naive_bayes import GaussianNB
 from src.au_dataloader import MusicLoader
 from feature_utilities import *
-
 
 num_texture_window = 30
 num_ana_window = 100
 frame_size = 512
 hop_size = 64
 n_examples = 3
-genres = ['classical', 'pop', 'jazz']
+genres = ['classical', 'pop']#, 'jazz']
 num_frames = num_ana_window * num_texture_window
 num_features = 9
 num_feature_cat = 4
@@ -69,7 +69,8 @@ def extract_feature_matrix(sample_idx, music_data, sr=sr, frame_size=frame_size)
     return feature_mat
 
 if __name__ == '__main__':
-    # load music
+    # load music as training set
+    n_examples = 30
     music_loader = MusicLoader('dataset_music/music_genres_dataset')
     music_data = music_loader.librosa_fetch(genres, 
                                             sr=sr, 
@@ -78,11 +79,24 @@ if __name__ == '__main__':
                                             hop_size=hop_size, 
                                             num_frames=num_frames)
     feature_matrices = dict()
+    X = []
+    Y = []
+    train_num = 20
     for i, genre in enumerate(genres):
-        for j in range(n_examples):
+        for j in range(train_num):
             idx = i * n_examples + j
             feature_matrices[(genre, j)] = extract_feature_matrix(idx, music_data, sr, frame_size)
-    
+            X.append(feature_matrices[(genre, j)][0])
+            Y.append(i)
+    clf = GaussianNB()
+    clf.fit(X, Y)
+
+    for i, genre in enumerate(genres):
+        for j in range(train_num, n_examples):
+            idx = i * n_examples + j
+            test_X = extract_feature_matrix(idx, music_data, sr, frame_size)
+            prediction = clf.predict([test_X[0]])
+            print('real class:{}, predicted class:{}'.format(i, prediction))
 
         
             
